@@ -52,8 +52,8 @@ int main() {
         }
     }
 
+    // Esperar a que el hilo termine antes de salir del programa
     pthread_join(tid, NULL);
 
     return 0;
 }
-
