@@ -1,6 +1,3 @@
-/* Filename: fifoserver.c */
-/* Servidor named pipe (FIFO) bidireccional */
-
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -9,36 +6,56 @@
 #include <string.h>
 
 #define FIFO_FILE "SERV_CLI"
+#define FIFO_FILE2 "CLI_SERV"
 
 int main() {
     int fd;
     char readbuf[80];
     char end[10];
     int to_end;
-    int read_bytes;
 
-    mknod(FIFO_FILE, S_IFIFO | 0640, 0);
+    // Crear el FIFO si no existe
+    mknod(FIFO_FILE, S_IFIFO|0640, 0);
+
     strcpy(end, "end");
 
-    while (1) {
-        fd = open(FIFO_FILE, O_RDWR); // Abre el FIFO en modo lectura y escritura
+    while(1) {
+        // Abrir el FIFO de lectura
+        fd = open(FIFO_FILE, O_RDONLY);
 
-        printf("Ingrese cadena (\"end\" para finalizar): ");
-        scanf("%s", readbuf);
+        // Leer desde el FIFO
+        read(fd, readbuf, sizeof(readbuf));
 
-        write(fd, readbuf, strlen(readbuf));
-        printf("Cadena enviada: \"%s\" con longitud %d\n", readbuf, (int)strlen(readbuf));
+        printf("Cadena recibida: \"%s\"\n", readbuf);
 
-        read_bytes = read(fd, readbuf, sizeof(readbuf));
-        readbuf[read_bytes] = '\0';
-
-        printf("Cadena recibida: \"%s\" con longitud %d\n", readbuf, (int)strlen(readbuf));
-
+        // Comprobar si se ha recibido la cadena de fin
         to_end = strcmp(readbuf, end);
         if (to_end == 0) {
             close(fd);
             break;
         }
+
+        // Cerrar el descriptor de archivo
+        close(fd);
+
+        printf("Ingrese cadena para enviar al cliente: ");
+        scanf("%s", readbuf);
+
+        // Abrir el FIFO de escritura
+        fd = open(FIFO_FILE2, O_WRONLY);
+
+        // Enviar la cadena al cliente
+        write(fd, readbuf, strlen(readbuf) + 1);
+
+        // Comprobar si se ha ingresado la cadena de fin
+        to_end = strcmp(readbuf, end);
+        if (to_end == 0) {
+            close(fd);
+            break;
+        }
+
+        // Cerrar el descriptor de archivo
+        close(fd);
     }
 
     return 0;
