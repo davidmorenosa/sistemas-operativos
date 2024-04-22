@@ -14,8 +14,9 @@ int main() {
     char end[10];
     int to_end;
 
-    // Crear el FIFO si no existe
+    // Crear los FIFOs si no existen
     mknod(FIFO_FILE, S_IFIFO|0640, 0);
+    mknod(FIFO_FILE2, S_IFIFO|0640, 0);
 
     strcpy(end, "end");
 
@@ -26,7 +27,7 @@ int main() {
         // Leer desde el FIFO
         read(fd, readbuf, sizeof(readbuf));
 
-        printf("Cadena recibida: \"%s\"\n", readbuf);
+        printf("Cadena recibida del cliente: \"%s\"\n", readbuf);
 
         // Comprobar si se ha recibido la cadena de fin
         to_end = strcmp(readbuf, end);
@@ -39,7 +40,8 @@ int main() {
         close(fd);
 
         printf("Ingrese cadena para enviar al cliente: ");
-        scanf("%s", readbuf);
+        fgets(readbuf, sizeof(readbuf), stdin);
+        readbuf[strcspn(readbuf, "\n")] = 0; // Eliminar el carácter de nueva línea
 
         // Abrir el FIFO de escritura
         fd = open(FIFO_FILE2, O_WRONLY);
