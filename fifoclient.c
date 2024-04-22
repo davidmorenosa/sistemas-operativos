@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <pthread.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -9,12 +10,28 @@
 #define FIFO_FILE2 "CLI_SERV"
 #define BUFFER_SIZE 80
 
-int main() {
+void *receive_message(void *arg) {
     int fd;
     char readbuf[BUFFER_SIZE];
+
+    while (1) {
+        // Leer desde el FIFO del servidor
+        fd = open(FIFO_FILE2, O_RDONLY);
+        read(fd, readbuf, BUFFER_SIZE);
+        printf("Mensaje recibido del servidor: %s", readbuf);
+        close(fd);
+    }
+
+    pthread_exit(NULL);
+}
+
+int main() {
+    int fd;
     char writebuf[BUFFER_SIZE];
-    int end_process;
-    char end_str[] = "end";
+    pthread_t tid;
+    
+    // Crear el hilo para recibir mensajes
+    pthread_create(&tid, NULL, receive_message, NULL);
 
     printf("FIFO_CLIENT: Comienza la comunicación, escribe 'end' para terminar.\n");
     
@@ -29,18 +46,14 @@ int main() {
         write(fd, writebuf, strlen(writebuf));
 
         // Verificar si el mensaje es 'end'
-        end_process = strcmp(writebuf, end_str);
-        if (end_process == 0) {
+        if (strcmp(writebuf, "end\n") == 0) {
             close(fd);
             break;
         }
-
-        // Leer desde el FIFO del servidor
-        fd = open(FIFO_FILE2, O_RDONLY);
-        read(fd, readbuf, BUFFER_SIZE);
-        printf("Mensaje recibido del servidor: %s", readbuf);
-        close(fd);
     }
+
+    pthread_join(tid, NULL);
 
     return 0;
 }
+
