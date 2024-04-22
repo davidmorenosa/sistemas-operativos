@@ -29,16 +29,17 @@ int main() {
     int fd;
     char writebuf[BUFFER_SIZE];
     pthread_t tid;
-    
+    int end_process = 0;
+
     // Crear el hilo para recibir mensajes
     pthread_create(&tid, NULL, receive_message, NULL);
 
     printf("FIFO_CLIENT: Comienza la comunicación, escribe 'end' para terminar.\n");
-    
+
     // Abrir el FIFO para escritura
     fd = open(FIFO_FILE, O_WRONLY);
 
-    while (1) {
+    while (!end_process) {
         printf("Ingrese mensaje para enviar al servidor: ");
         fgets(writebuf, BUFFER_SIZE, stdin);
 
@@ -46,11 +47,11 @@ int main() {
         write(fd, writebuf, strlen(writebuf));
 
         // Verificar si el mensaje es 'end'
-        if (strcmp(writebuf, "end\n") == 0) {
-            close(fd);
-            break;
-        }
+        end_process = strcmp(writebuf, "end\n") == 0;
     }
+
+    // Cerrar extremo de escritura del FIFO del servidor
+    close(fd);
 
     // Esperar a que el hilo termine antes de salir del programa
     pthread_join(tid, NULL);
