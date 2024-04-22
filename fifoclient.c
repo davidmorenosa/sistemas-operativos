@@ -48,6 +48,12 @@ int main() {
 
         // Verificar si el mensaje es 'end'
         end_process = strcmp(writebuf, "end\n") == 0;
+
+        // Si el mensaje no es 'end', esperar por la respuesta del servidor antes de enviar otro mensaje
+        if (!end_process) {
+            printf("Esperando respuesta del servidor...\n");
+            sleep(1);  // Esperar un segundo antes de enviar otro mensaje (puedes ajustar este tiempo según sea necesario)
+        }
     }
 
     // Cerrar extremo de escritura del FIFO del servidor
