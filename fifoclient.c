@@ -10,17 +10,17 @@
 
 int main() {
     int fd;
-    int fd2; // Descriptor de archivo para el segundo FIFO
+    int fd2;
     int end_process;
     char readbuf[80];
     char end_str[5];
 
     printf("FIFO_CLIENT: envía mensajes, de forma indefinida, para terminar presionar \"end\"\n");
 
-    // Abrir el FIFO de escritura
+    // Abrir el FIFO de escritura hacia el servidor
     fd = open(FIFO_FILE, O_WRONLY);
 
-    // Abrir el FIFO de lectura
+    // Abrir el FIFO de lectura desde el servidor
     fd2 = open(FIFO_FILE2, O_RDONLY);
 
     strcpy(end_str, "end");
@@ -42,7 +42,7 @@ int main() {
             break;
         }
 
-        // Leer la respuesta del servidor desde el FIFO CLI_SERV
+        // Leer la respuesta del servidor desde el FIFO
         read(fd2, readbuf, sizeof(readbuf));
         printf("Respuesta del servidor: \"%s\"\n", readbuf);
 

@@ -10,6 +10,7 @@
 
 int main() {
     int fd;
+    int fd2;
     char readbuf[80];
     char end[10];
     int to_end;
@@ -21,7 +22,7 @@ int main() {
     strcpy(end, "end");
 
     while(1) {
-        // Abrir el FIFO de lectura
+        // Abrir el FIFO de lectura del cliente
         fd = open(FIFO_FILE, O_RDONLY);
 
         // Leer desde el FIFO
@@ -43,21 +44,21 @@ int main() {
         fgets(readbuf, sizeof(readbuf), stdin);
         readbuf[strcspn(readbuf, "\n")] = 0; // Eliminar el carácter de nueva línea
 
-        // Abrir el FIFO de escritura
-        fd = open(FIFO_FILE2, O_WRONLY);
+        // Abrir el FIFO de escritura hacia el cliente
+        fd2 = open(FIFO_FILE2, O_WRONLY);
 
         // Enviar la cadena al cliente
-        write(fd, readbuf, strlen(readbuf) + 1);
+        write(fd2, readbuf, strlen(readbuf) + 1);
 
         // Comprobar si se ha ingresado la cadena de fin
         to_end = strcmp(readbuf, end);
         if (to_end == 0) {
-            close(fd);
+            close(fd2);
             break;
         }
 
         // Cerrar el descriptor de archivo
-        close(fd);
+        close(fd2);
     }
 
     return 0;
