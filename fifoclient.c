@@ -1,5 +1,7 @@
+/* Filename: fifoclient.c */
+/* Cliente named pipe (FIFO) bidireccional */
+
 #include <stdio.h>
-#include <pthread.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -7,60 +9,41 @@
 #include <string.h>
 
 #define FIFO_FILE "SERV_CLI"
-#define FIFO_FILE2 "CLI_SERV"
-#define BUFFER_SIZE 80
-
-void *receive_message(void *arg) {
-    int fd;
-    char readbuf[BUFFER_SIZE];
-
-    while (1) {
-        // Leer desde el FIFO del servidor
-        fd = open(FIFO_FILE2, O_RDONLY);
-        read(fd, readbuf, BUFFER_SIZE);
-        printf("Mensaje recibido del servidor: %s", readbuf);
-        close(fd);
-    }
-
-    pthread_exit(NULL);
-}
 
 int main() {
     int fd;
-    char writebuf[BUFFER_SIZE];
-    pthread_t tid;
-    int end_process = 0;
+    int end_process;
+    int stringlen;
+    char readbuf[80];
+    char end_str[5];
 
-    // Crear el hilo para recibir mensajes
-    pthread_create(&tid, NULL, receive_message, NULL);
+    printf("FIFO_CLIENT: envía mensajes, de forma indefinida, para terminar presionar \"end\"\n");
+    fd = open(FIFO_FILE, O_RDWR); // Abre el FIFO en modo lectura y escritura
 
-    printf("FIFO_CLIENT: Comienza la comunicación, escribe 'end' para terminar.\n");
+    strcpy(end_str, "end");
 
-    // Abrir el FIFO para escritura
-    fd = open(FIFO_FILE, O_WRONLY);
+    while (1) {
+        printf("Ingrese cadena (\"end\" para finalizar): ");
+        scanf("%s", readbuf);
 
-    while (!end_process) {
-        printf("Ingrese mensaje para enviar al servidor: ");
-        fgets(writebuf, BUFFER_SIZE, stdin);
+        stringlen = strlen(readbuf);
+        readbuf[stringlen] = '\0';
 
-        // Escribir en el FIFO
-        write(fd, writebuf, strlen(writebuf));
+        end_process = strcmp(readbuf, end_str);
+        if (end_process != 0) {
+            write(fd, readbuf, strlen(readbuf));
+            printf("Cadena enviada: \"%s\" con longitud %d\n", readbuf, (int)strlen(readbuf));
 
-        // Verificar si el mensaje es 'end'
-        end_process = strcmp(writebuf, "end\n") == 0;
-
-        // Si el mensaje no es 'end', esperar por la respuesta del servidor antes de enviar otro mensaje
-        if (!end_process) {
-            printf("Esperando respuesta del servidor...\n");
-            sleep(1);  // Esperar un segundo antes de enviar otro mensaje (puedes ajustar este tiempo según sea necesario)
+            int read_bytes = read(fd, readbuf, sizeof(readbuf));
+            readbuf[read_bytes] = '\0';
+            printf("Cadena recibida: \"%s\" con longitud %d\n", readbuf, (int)strlen(readbuf));
+        } else {
+            write(fd, readbuf, strlen(readbuf));
+            printf("Cadena enviada: \"%s\" con longitud %d\n", readbuf, (int)strlen(readbuf));
+            close(fd);
+            break;
         }
     }
-
-    // Cerrar extremo de escritura del FIFO del servidor
-    close(fd);
-
-    // Esperar a que el hilo termine antes de salir del programa
-    pthread_join(tid, NULL);
 
     return 0;
 }
